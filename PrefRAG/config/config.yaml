@@ -1,0 +1,25 @@
+model:
+
+  OPENAI_API_KEY: ""
+  OPENAI_BASE_URL: ""
+  ZHIPUAI_API_KEY: ""
+  llama3.1-8b-instruct: "meta-llama/Llama-3.1-8B-Instruct"
+  llama-3.1-70b-instruct: "meta-llama/Llama-3.1-70B-Instruct"
+  glm4-9b-chat: "THUDM/glm-4-9b-chat"
+  glm4-9b-chat-dpo: "" 
+  bge-large-en-v1.5: ""
+
+es:
+  url: "http://localhost:9200"
+
+prompt:
+  zh_prefrag: "请尽你所能地回答以下问题。如果你需要搜索更多信息，你可以使用以下工具：\n\n{% for tool in tools %}\n{{ tool.__name__ }}: {{ tool.introduction() }}\n{% endfor %}\n\n问题：你必须回答的输入问题\n每一步请使用以下格式：\n\nThought: 你应该始终思考下一步该做什么\nAction: 要采取的行动，如有必要，应为 [{{ tools | map(attribute='__name__') | join(', ') }}] 中的一个（确保使用列表中的**确切工具名称**）\nAction Input: 该行动的输入内容\nObservation: 该行动的执行结果\n...（这一“Thought/Action/Action Input/Observation”过程不应重复超过 {{max_step}} 次。如果超过 {{max_step}} 次，应直接给出最终答案。）\nThought: 我现在知道了对原始问题的最终答案\nFinal Answer: {{answer_format}}\n\nSelf-Evaluation: 通过选择 CORRECT / PARTIALLY CORRECT / INCORRECT] 之一来描述最终答案的准确性。\nExplanation: 简要说明你为何选择该标签。\n改进建议：如有必要，可建议如何改进答案（如果答案是正确的可省略此项）。\n### 注意：请确保最终答案严格遵循以下格式：{{answer_format}}\n\n开始！\n\n问题：{{ question }}\n{{ thought }}"
+  zh_prefer_retrieval: '你的任务是评估新获取的信息是否为回答原始问题提供了额外的见解或价值。请按以下步骤仔细执行：\n\n1. 将新信息（标记为“New information”）与已有信息（标记为“Information already obtained”）进行比较。\n2. 判断“New information”中是否包含有助于解决“Original question”的任何新细节或要素。\n3. 将结果以以下 JSON 格式的字典输出：\n```json{{"analysis": "<你的分析内容>","status": "<True 或 False>"}}```\n关键点：\n- 如果“New information”添加了先前缺失的相关细节，并有助于回答原始问题，则视为有帮助。\n- 与问题无关、重复或已知的信息应输出 "status": "False"。\nOriginal question: {question}\n\nInformation already obtained: {existed_info}\n\nNew information: {observation}\n\nYour task: 根据上述内容判断，是否提供了新的、有用的信息？'
+  prefrag: "Answer the following questions as best you can. When you need to search more information, You have access to the following tools:\n\n{% for tool in tools %}\n{{ tool.__name__ }}: {{ tool.introduction() }}\n{% endfor %}\n\nQuestion: the input question you must answer\nUse the following format for each step:\n\nThought: you should always think about what to do\nAction: the action to take, should be one of [{{ tools | map(attribute='__name__') | join(', ') }}] if it needed（Make sure to use the exact tool name from the list）\nAction Input: the input of the action\nObservation: the result of the action\n... (this Thought/Action/Action Input/Observation should not be repeated more than {{max_step}} times. If it exceeds {{max_step}} times, the final answer should be given directly.)\nThought: I now know the final answer to the original question\nFinal Answer: {{answer_format}}\n\nSelf-Evaluation: Describe the accuracy of the Final Answer by choosing one of [CORRECT / PARTIALLY CORRECT / INCORRECT]. \nExplanation: Briefly explain why you chose the label. \nImprovement Suggestions: Optionally suggest how the answer could be improved if needed (omit this if the answer is correct). \n### Note: Ensure the Final Answer strictly follows the format: {{answer_format}}\n\nBegin!\n\nQuestion: {{ question }}\n{{ thought }}"
+  prefer_retrieval: 'You are tasked with evaluating whether newly retrieved information provides additional insights or value for answering an original question. Follow these steps carefully:\n\n1. Compare the new information (labeled as "New information") against the information already obtained (labeled as "Information already obtained").\n2. Determine if the "New information" includes any new details or elements that directly contribute to solving the "Original question."\n3. Output the result as a dictionary in the following JSON format: \n```json{{"analysis": "<your analysis here>","status": "<True or False>"}}```\nKey points:\n- "New information" is considered helpful if it adds relevant details that were previously absent and assists in answering the original question.\n- Irrelevant, redundant, or already-known information should result in "status": "False".\nOriginal question: {question}\n\nInformation already obtained: {existed_info}\n\nNew information: {observation}\n\nYour task: Judging based on the above content, has new, useful information been provided?'
+  zh_answer_format: '提供对原始输入问题最简洁的回答。只给我最终答案，不要包含任何其他词语'
+  zh_base_answer_format: '\n根据以上信息，回答这个问题：\n{question}\n只给出答案，不要包含任何其他词语。\n\n答案：'
+  answer_format: 'Provide the most concise answer to the original input question. Give me only the final answer without including any other words'
+  base_answer_format: '\nBased on the above information, answer this question:\n{question}\nGive me only the answer without including any other words.\n\nAnswer:'
+  bio_answer_format: 'ANSWER "yes" OR "no" ONLY (You have to choose the most likely option)'
+  bio_base_answer_format: '\nBased on the above information, answer this question:\n{question}\n\nANSWER "yes" OR "no" ONLY (You have to choose the most likely option).\nAnswer:'
