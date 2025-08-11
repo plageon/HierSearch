@@ -1,5 +1,4 @@
 LICENSE
-README.md
 setup.py
 src/hipporag/HippoRAG.py
 src/hipporag/StandardRAG.py
@@ -34,10 +33,14 @@ src/hipporag/prompts/linking.py
 src/hipporag/prompts/prompt_template_manager.py
 src/hipporag/prompts/templates/__init__.py
 src/hipporag/prompts/templates/ircot_hotpotqa.py
+src/hipporag/prompts/templates/ircot_hotpotqa_ZH.py
 src/hipporag/prompts/templates/ircot_musique.py
+src/hipporag/prompts/templates/ircot_pubmedqa.py
 src/hipporag/prompts/templates/ner.py
 src/hipporag/prompts/templates/ner_query.py
 src/hipporag/prompts/templates/rag_qa_musique.py
+src/hipporag/prompts/templates/rag_qa_musique_ZH.py
+src/hipporag/prompts/templates/rag_qa_pubmedqa.py
 src/hipporag/prompts/templates/triple_extraction.py
 src/hipporag/utils/__init__.py
 src/hipporag/utils/config_utils.py

@@ -426,6 +426,11 @@ if __name__ == "__main__":
     parser.add_argument("--ablation", type=str, default="", help="ablation study")
     parser.add_argument("--filter_ratio", type=float, default=0.0, help="filter ratio for the conversation")
 
+    # Inference a single sample
+    parser.add_argument("--single_sample", action='store_true', help="Whether to run inference on a single sample")
+    parser.add_argument("--question", type=str, default="", help="The question to be answered")
+    parser.add_argument("--filter_ratio", type=float, default=0.0, help="filter ratio for the conversation")
+
     args = parser.parse_args()
     method_name = args.method_name
     data_dir = args.data_dir
@@ -488,107 +493,153 @@ if __name__ == "__main__":
         "pubmedqa": 0.6,
     }
 
-    dataset_names = ["musique", "omnieval", "bioasq", "nq", "hotpotqa", "pubmedqa"]
-    # dataset_names = ["musique", "omnieval", "pubmedqa"]
-    for dataset_name in dataset_names:
-        if dataset_name == "omnieval":
-            os.environ["EVAL_LANG"] = "zh"
-        else:
-            os.environ["EVAL_LANG"] = "en"
-        loguru.logger.info(f"Setting EVAL_LANG to {os.environ['EVAL_LANG']}")
-        # read data
-        data_path = f'{data_dir}/{dataset_name}/{split}.jsonl'
-        save_path = f'{data_dir}/{dataset_name}/rollout/{method_name}_{split}.jsonl'
-        with open(data_path, 'r') as f:
-            data = [json.loads(line) for line in f]
-        # data = data[:4]
-
-        remote_retriever_url = remote_retriever_urls[dataset_name]
-        if args.filter_ratio == 0.0:
-            filter_ratio = filter_ratios[dataset_name]
-        else:
-            filter_ratio = args.filter_ratio
+    if args.single_sample:
+        # run inference on a single sample
+        if args.question == "":
+            raise ValueError("Please provide a question for single sample inference")
+        loguru.logger.info(f"Running inference on a single sample: {args.question}")
+        data = [{"id": "single_sample", "question": args.question, "golden_answers": [""]}]
+        remote_retriever_url = args.remote_retriever_url
+        filter_ratio = args.filter_ratio
         loguru.logger.info(f"Using remote retriever url: {remote_retriever_url}, filter_ratio: {filter_ratio}")
 
-        # eval rollout sequence
-        gold_answers = [item['golden_answers'] for item in data]
-        for _gold_answers in gold_answers:
-            if len(_gold_answers) == 0:
-                _gold_answers.append("")
-                loguru.logger.info(f"Empty gold answers, set to empty string")
+        question = args.question
+        sample_id = "single_sample"
+        # loguru.logger.info(f"Question: {question}")
+        original_messages = [
+            {"role": "system", "content": sys_template},
+            {"role": "user", "content": question},
+        ]
+        original_input = tokenizer.apply_chat_template(original_messages, tokenize=False, add_generation_prompt=True)
+        # loguru.logger.info(f"Original input: {original_input}")
 
-        answers = ["" for _ in range(len(data))]
-        rollout_sequences = ["" for _ in range(len(data))]
-        sample_ids = [item['id'] for item in data]
+        # online eval
+        round_cnt = 0
+        model_input = original_input
+        while round_cnt < max_turns:
+            round_cnt += 1
+            # loguru.logger.info(f"Round {round_cnt}")
+            response = sample_response(llm_client, serve_model_name, model_input, stop_words)
+            # loguru.logger.info(f"Round {round_cnt}, response: {response}")
+            completion = response.choices[0].text
+            stop_reason = response.choices[0].stop_reason
+            finish_reason = response.choices[0].finish_reason
+            # loguru.logger.info(f"Round {round_cnt}, completion: {completion}, stop_reason: {stop_reason}")
+            # parse response
+            completion, search_res = parse_response(sample_id, completion, stop_reason, finish_reason)
+            # loguru.logger.info(f"Round {round_cnt}, search_res: {search_res}")
+            next_input = model_input + completion
+            # loguru.logger.info(f"Next input: {next_input}")
+            if search_res == "":
+                break
+            else:
+                next_input += search_res
+                model_input = next_input
+        answer = extract_answer(next_input)
+        loguru.logger.info(f"Final input: {next_input} answer: {answer}")
 
-        local_agent_rollouts, web_agent_rollouts = {sid: [] for sid in sample_ids}, {sid: [] for sid in sample_ids}
+    else:
+        dataset_names = ["musique", "omnieval", "bioasq", "nq", "hotpotqa", "pubmedqa"]
+        # dataset_names = ["musique", "omnieval", "pubmedqa"]
+        for dataset_name in dataset_names:
+            if dataset_name == "omnieval":
+                os.environ["EVAL_LANG"] = "zh"
+            else:
+                os.environ["EVAL_LANG"] = "en"
+            loguru.logger.info(f"Setting EVAL_LANG to {os.environ['EVAL_LANG']}")
+            # read data
+            data_path = f'{data_dir}/{dataset_name}/{split}.jsonl'
+            save_path = f'{data_dir}/{dataset_name}/rollout/{method_name}_{split}.jsonl'
+            with open(data_path, 'r') as f:
+                data = [json.loads(line) for line in f]
+            # data = data[:4]
 
-        def rollout_thread(idx):
-            question = data[idx]['question']
-            sample_id = data[idx]['id']
-            # loguru.logger.info(f"Question: {question}")
+            remote_retriever_url = remote_retriever_urls[dataset_name]
+            if args.filter_ratio == 0.0:
+                filter_ratio = filter_ratios[dataset_name]
+            else:
+                filter_ratio = args.filter_ratio
+            loguru.logger.info(f"Using remote retriever url: {remote_retriever_url}, filter_ratio: {filter_ratio}")
 
-            original_messages = [
-                {"role": "system", "content": sys_template},
-                {"role": "user", "content": question},
-            ]
-            original_input = tokenizer.apply_chat_template(original_messages, tokenize=False, add_generation_prompt=True)
-            # loguru.logger.info(f"Original input: {original_input}")
+            # eval rollout sequence
+            gold_answers = [item['golden_answers'] for item in data]
+            for _gold_answers in gold_answers:
+                if len(_gold_answers) == 0:
+                    _gold_answers.append("")
+                    loguru.logger.info(f"Empty gold answers, set to empty string")
 
-            # online eval
-            round_cnt = 0
-            model_input = original_input
-            while round_cnt < max_turns:
-                round_cnt += 1
-                # loguru.logger.info(f"Round {round_cnt}")
-                response = sample_response(llm_client, serve_model_name, model_input, stop_words)
-                # loguru.logger.info(f"Round {round_cnt}, response: {response}")
-                completion = response.choices[0].text
-                stop_reason = response.choices[0].stop_reason
-                finish_reason = response.choices[0].finish_reason
-                # loguru.logger.info(f"Round {round_cnt}, completion: {completion}, stop_reason: {stop_reason}")
-                # parse response
-                completion, search_res = parse_response(sample_id, completion, stop_reason, finish_reason)
-                # loguru.logger.info(f"Round {round_cnt}, search_res: {search_res}")
-                next_input = model_input + completion
-                # loguru.logger.info(f"Next input: {next_input}")
-                if search_res == "":
-                    break
-                else:
-                    next_input += search_res
-                    model_input = next_input
-            answer = extract_answer(next_input)
-            answers[idx] = answer
-            rollout_sequences[idx] = next_input
-            # loguru.logger.info(f"Final input: {next_input} answer: {answer}")
-            return answer
+            answers = ["" for _ in range(len(data))]
+            rollout_sequences = ["" for _ in range(len(data))]
+            sample_ids = [item['id'] for item in data]
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
-            future_list = [executor.submit(rollout_thread, idx) for idx in range(len(data))]
-            with tqdm(total=len(future_list), desc="Rollout") as pbar:
-                for i in range(len(future_list)):
-                    try:
-                        future = future_list[i]
-                        future.result()  # wait for the result
-                    except Exception as e:
-                        loguru.logger.error(f"Error in rollout thread {i}: {e}")
-                        import traceback
-                        traceback.print_exc()
-                    pbar.update(1)
-            pbar.close()
+            local_agent_rollouts, web_agent_rollouts = {sid: [] for sid in sample_ids}, {sid: [] for sid in sample_ids}
 
-        overall_qa_results = evaluate_rollout_sequence(gold_answers, answers)
-        loguru.logger.info(f"gold_answers: {gold_answers}, \nanswers: {answers}")
-        loguru.logger.info(f"Overall QA results: {overall_qa_results}")
+            def rollout_thread(idx):
+                question = data[idx]['question']
+                sample_id = data[idx]['id']
+                # loguru.logger.info(f"Question: {question}")
 
-        os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        # save results
-        loguru.logger.info(f"Saving results to {save_path}")
-        with open(save_path, 'w') as f:
-            for i, item in enumerate(data):
-                item['answer'] = answers[i]
-                item['rollout_sequence'] = rollout_sequences[i]
-                item['local_agent_rollouts'] = local_agent_rollouts[sample_ids[i]]
-                item['web_agent_rollouts'] = web_agent_rollouts[sample_ids[i]]
-                f.write(json.dumps(item, ensure_ascii=False) + '\n')
+                original_messages = [
+                    {"role": "system", "content": sys_template},
+                    {"role": "user", "content": question},
+                ]
+                original_input = tokenizer.apply_chat_template(original_messages, tokenize=False, add_generation_prompt=True)
+                # loguru.logger.info(f"Original input: {original_input}")
+
+                # online eval
+                round_cnt = 0
+                model_input = original_input
+                while round_cnt < max_turns:
+                    round_cnt += 1
+                    # loguru.logger.info(f"Round {round_cnt}")
+                    response = sample_response(llm_client, serve_model_name, model_input, stop_words)
+                    # loguru.logger.info(f"Round {round_cnt}, response: {response}")
+                    completion = response.choices[0].text
+                    stop_reason = response.choices[0].stop_reason
+                    finish_reason = response.choices[0].finish_reason
+                    # loguru.logger.info(f"Round {round_cnt}, completion: {completion}, stop_reason: {stop_reason}")
+                    # parse response
+                    completion, search_res = parse_response(sample_id, completion, stop_reason, finish_reason)
+                    # loguru.logger.info(f"Round {round_cnt}, search_res: {search_res}")
+                    next_input = model_input + completion
+                    # loguru.logger.info(f"Next input: {next_input}")
+                    if search_res == "":
+                        break
+                    else:
+                        next_input += search_res
+                        model_input = next_input
+                answer = extract_answer(next_input)
+                answers[idx] = answer
+                rollout_sequences[idx] = next_input
+                # loguru.logger.info(f"Final input: {next_input} answer: {answer}")
+                return answer
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
+                future_list = [executor.submit(rollout_thread, idx) for idx in range(len(data))]
+                with tqdm(total=len(future_list), desc="Rollout") as pbar:
+                    for i in range(len(future_list)):
+                        try:
+                            future = future_list[i]
+                            future.result()  # wait for the result
+                        except Exception as e:
+                            loguru.logger.error(f"Error in rollout thread {i}: {e}")
+                            import traceback
+                            traceback.print_exc()
+                        pbar.update(1)
+                pbar.close()
+
+            overall_qa_results = evaluate_rollout_sequence(gold_answers, answers)
+            loguru.logger.info(f"gold_answers: {gold_answers}, \nanswers: {answers}")
+            loguru.logger.info(f"Overall QA results: {overall_qa_results}")
+
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            # save results
+            loguru.logger.info(f"Saving results to {save_path}")
+            with open(save_path, 'w') as f:
+                for i, item in enumerate(data):
+                    item['answer'] = answers[i]
+                    item['rollout_sequence'] = rollout_sequences[i]
+                    item['local_agent_rollouts'] = local_agent_rollouts[sample_ids[i]]
+                    item['web_agent_rollouts'] = web_agent_rollouts[sample_ids[i]]
+                    f.write(json.dumps(item, ensure_ascii=False) + '\n')
 

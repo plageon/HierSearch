@@ -24,5 +24,6 @@ setuptools.setup(
         # "tenacity==8.5.0",
         "einops", # No version specified
         "tqdm", # No version specified
+        "python-igraph",
     ]
 )

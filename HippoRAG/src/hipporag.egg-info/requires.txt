@@ -1,8 +1,2 @@
-gritlm==1.0.2
-networkx
-python_igraph==0.11.8
-tiktoken==0.7.0
-pydantic==2.10.4
-tenacity==8.5.0
 einops
 tqdm

@@ -2,8 +2,6 @@ from typing import List
 
 import numpy as np
 import torch
-from tqdm import tqdm
-from vllm.attention.ops.triton_flash_attention import torch_dtype
 
 from .Contriever import ContrieverModel
 from .base import EmbeddingConfig, BaseEmbeddingModel
