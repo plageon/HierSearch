@@ -61,14 +61,14 @@ install_requires = [
 ]
 
 setup(
-    name='hier-search',
+    name='hiersearch',
     version=__version__,
     package_dir={'': 'src'},
     packages=find_packages(where='src'),
-    url='',
+    url='https://github.com/plageon/HierSearch',
     license='MIT License',
-    author='',
-    author_email='',
+    author='Jiejun Tan',
+    author_email='zstanjj@gmail.com',
     description='HierSearch: A Hierarchical Enterprise Deep Search Framework Integrating Local and Web Searches',
     install_requires=install_requires,
     package_data={'': ['**/*.yaml']},

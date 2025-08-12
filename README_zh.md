@@ -5,7 +5,7 @@
 <a href="https://huggingface.co/papers/2508.08088" target="_blank"><img src=https://img.shields.io/badge/Paper-Hugging%20Face-yellow?logo=huggingface></a>
 <a href="https://huggingface.co/collections/zstanjj/hiersearch-6889c44cce34aebcdfd73b4a" target="_blank"><img src=https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace%20Models-27b3b4.svg></a>
 <a href="https://www.modelscope.cn/collections/HierSearch-6638ad769ddb44" target="_blank"><img src=https://custom-icon-badges.demolab.com/badge/ModelScope%20Models-624aff?style=flat&logo=modelscope&logoColor=white></a>
-<a href="https://github.com/plageon/HierSearch/blob/main/toolkit/LICENSE"><img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-green"></a>
+<a href="https://github.com/plageon/HierSearch/blob/main/LICENCE"><img alt="License" src="https://img.shields.io/badge/LICENSE-MIT-green"></a>
 <a><img alt="Static Badge" src="https://img.shields.io/badge/made_with-Python-blue"></a>
 
 [//]: # (<img alt="PyPI - Version" src="https://img.shields.io/pypi/v/htmlrag">)
