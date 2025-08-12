@@ -61,7 +61,7 @@ modelscope download --model BAAI/bge-m3 --local_dir model/bge-m3
 1. Construct graph
 
     We have released the constructed graph for six benchmarks we used in our paper.
-    Download the graph from the dataset repo on [ModelScope](https://www.modelscope.cn/collections/HtmlRAG-c290f7cf673648) or [HuggingFace](https://huggingface.co/collections/zstanjj/hiersearch-6889c44cce34aebcdfd73b4a).
+    Download the graph from the dataset repo on [ModelScope](https://www.modelscope.cn/datasets/zstanjj/HierSearch-Datasets) or [HuggingFace](https://huggingface.co/datasets/zstanjj/HierSearch-Datasets).
     Make a directory named `graph` in each dataset directory, and put the graph files named `openie_results_ner_gpt-4o-mini.json` in it.
     Your directory structure should look like this:
     ```
@@ -209,7 +209,7 @@ The results show that HierSearch outperforms baselines and the flat RL solution 
 
 ## 🚀 Training
 
-Download the merged training data from the dataset repo on [ModelScope](https://www.modelscope.cn/collections/HierSearch-6638ad769ddb44) or [HuggingFace](https://huggingface.co/collections/zstanjj/hiersearch-6889c44cce34aebcdfd73b4a) named `all_train.parquet` and put it in the `data` directory.
+Download the merged training data from the dataset repo on [ModelScope](https://www.modelscope.cn/datasets/zstanjj/HierSearch-Datasets) or [HuggingFace](https://huggingface.co/datasets/zstanjj/HierSearch-Datasets) named `all_train.parquet` and put it in the `data` directory.
 
 1. Train local search agent
     ```shell

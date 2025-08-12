@@ -59,7 +59,7 @@ modelscope download --model BAAI/bge-m3 --local_dir model/bge-m3
 1. 建图
     
     我们已经为论文中使用的六个基准数据集构建了图。
-    从[ModelScope](https://www.modelscope.cn/collections/HtmlRAG-c290f7cf673648)或[HuggingFace](https://huggingface.co/collections/zstanjj/hiersearch-6889c44cce34aebcdfd73b4a)下载图文件。
+    从[ModelScope](https://www.modelscope.cn/datasets/zstanjj/HierSearch-Datasets)或[HuggingFace](https://huggingface.co/datasets/zstanjj/HierSearch-Datasets)下载图文件。
     在每个数据集目录中创建一个名为`graph`的目录，并将图文件`openie_results_ner_gpt-4o-mini.json`放入其中。
     您的目录结构应如下所示：
 
