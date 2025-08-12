@@ -24,22 +24,22 @@
 
 ## ✨ Latest News
 
-- [31/07/2025]: The open-source training and inference are released. You can apply HierSearch now.
+- [31/07/2025]: - 我们开源了训练和推理代码，欢迎使用HierSearch。
 
 
-## 📝 Introduction
+## 📝 简介
 
-1. We explore the deep search framework in multi-knowledge-source scenarios and propose a hierarchical agentic paradigm and train with HRL; 
-2. We notice drawbacks of the naive information transmission among deep search agents and developed a knowledge refiner suitable for multi-knowledge-source scenarios; 
-3. Our proposed approach for reliable and effective deep search across multiple knowledge sources outperforms existing baselines the flat-RL solution in various domains.
+1. 我们探索了多知识源场景下的深度搜索框架，提出了分层代理范式，并使用HRL进行训练；
+2. 我们注意到深度搜索代理之间信息传递的缺陷，并开发了适用于多知识源场景的知识精炼器；
+3. 我们提出的跨多个知识源的可靠有效的深度搜索方法在各个领域中优于现有的基线平坦RL解决方案。
 
-## 📦 Installation
+## 📦 安装
 
-1. Install required packages
+1. 安装必要的包
 ```shell
 pip intall -e .
 ```
-2. Download required checkpoints
+2. 下载必要的模型参数
 ```shell
 modelscope download --model zstanjj/HierSearch-Local-Agent --local_dir model/HierSearch-Local-Agent
 modelscope download --model zstanjj/HierSearch-Web-Agent --local_dir model/HierSearch-Web-Agent
@@ -47,11 +47,11 @@ modelscope download --model zstanjj/HierSearch-Planner-Agent --local_dir model/H
 modelscope download --model BAAI/bge-m3 --local_dir model/bge-m3
 ```
 
-## 🔌 Apply HtmlRAG in your own RAG systems
+## 🔌 在你的项目中使用HierSearch
 
 ### 🎯 Quick Start
 
-1. Construct graph
+1. 建图
 ```shell
 export OPENAI_API_KEY="YOUR_OPENAI_API_KEY"
 
@@ -68,7 +68,7 @@ python agentic_rag/construct_graph.py \
     --data_dir "DATA_DIR"
 ```
 
-2. Initialize local search server
+2. 初始化本地搜索工具
 ```shell
 export OPENIE_LANG="en"
 
@@ -83,14 +83,14 @@ python agentic_rag/serve_graph_search.py \
     --llm_base_url "OPENAI_BASE_URL"
 ```
 
-3. Initialize Web search server
+3. 初始化联网搜索工具
 ```shell
 python search_utils/web_dedicate_server.py
     --num_retriever 8 \
     --port 15005
 ```
 
-4. Serve agents
+4. 启动智能体模型
 ```shell
 vllm serve LOCAL_AGENT_PATH \
     --served-model-name HierSearch-Local-Agent \
@@ -114,7 +114,7 @@ vllm serve PLANNER_AGENT_PATH \
     --port 80
 ```
 
-5. Serve deep search agent server
+5. 启动智能体服务
 ```shell
 python agentic_rag/serve_search_agent.py \
     --num_agents 8 \
@@ -136,7 +136,7 @@ python agentic_rag/serve_search_agent.py \
     --filter_ratio 0.5
 ```
 
-6. Run online inference
+6. 运行在线推理
 ```shell
 python baselines/online_eval.py \
     --method_name "HierSearch" \
@@ -151,13 +151,13 @@ python baselines/online_eval.py \
 ```
 
 
-### 🚀 Reproduce Our Results
-Download dataset
+### 🚀 复现我们的结果
+1. 下载数据集
 ```shell
 modelscope download zstanjj/HierSearch-Datasets --local_dir data --repo-type dataset
 ```
 
-Run deep search
+2. 深度搜索推理
 ```shell
 python baselines/online_eval.py \
     --method_name "HierSearch" \
@@ -173,25 +173,8 @@ python baselines/online_eval.py \
     --max_turns 8
 ```
 
-## 🚀 Training
 
-```shell
-export PROMPT_TEMPLATE_NAME="local"
-export SUPPORTED_TOOLS="[chunk_search, graph_search, get_adjacent_passages]"
-./scripts/train_deep_search.sh
-
-
-export PROMPT_TEMPLATE_NAME="web"
-export SUPPORTED_TOOLS="[web_search, browse_url]"
-./scripts/train_deep_search.sh
-
-
-export PROMPT_TEMPLATE_NAME="planner"
-export SUPPORTED_TOOLS="[local_search_agent, web_search_agent, all_search_agent]"
-./scripts/train_deep_search.sh
-```
-
-## 📜 Citation
+## 📜 引用
 
 ```bibtex
 @misc{hiersearch2025,
